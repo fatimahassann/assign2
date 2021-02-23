@@ -159,7 +159,7 @@ if(pid==-1)
 	printf("pipe error");
 
 if(pid==0) /*first child */
-{	
+{	close(1); 
 	dup2(pfd[1],1);
 	close(pfd[0]);
 	close(pfd[1]); 
@@ -171,8 +171,8 @@ int pid2=fork();
 if(pid2==-1)
 	printf("pipe error");
 
-if(pid2==0) /*second child */
-{
+if(pid2==0)  /*second child */
+{	close(0);
 	dup2(pfd[0],0);
 	close(pfd[1]);
 	close(pfd[0]);
@@ -187,7 +187,7 @@ int main()
 	char* bin= "/bin/";
 	char path[1024];
 	int argc;
-
+	int echo_flag=0;
 	creating_storing_array(); 
 
 
@@ -222,7 +222,8 @@ int main()
 			int num;
 			num=0;
 			if(argv[1][0]=='$')
-			{ /* printing element from the 2 restored variables */
+			{ echo_flag=1;
+				/* printing element from the 2 restored variables */
 				/* adding  a $ at the begining of the string to compare later */
 				char r[50];
 					/*comparing until we find the right element stored */
@@ -245,7 +246,6 @@ int main()
 			}
 		
 		}
-		int pfd[2];
 		char* cmd_before[100];
 		char* cmd_after[100];
 		/*handle piping */
@@ -299,17 +299,7 @@ int main()
 			}
 		}
 
-		/* handle < redirection */
-		if(flag_right==1)
-		{
-			filename_src=argv[loc_right+1];
-			int i=0;
-		/* adjusting so that we can remove the < */
-			for ( i = loc_right; argv[i-1]!=NULL;i++)
-				argv[i]=argv[i+2];
-
-			
-		} 
+		
 		/* handle > redirection */
 
 		if(flag_left==1)
@@ -396,26 +386,29 @@ int main()
 		{	
 			directories(argv);
 		}
-		else
+		else if(flag_equal!=1 && echo_flag!=1)
 		{	
+			FILE * f;
+			FILE* f2;
 			int pid=fork();
 			if ( pid == 0)
-			{	if(flag_right==1)
+			{	/*if(flag_right==1)
 				{
-					freopen(filename_src,"r",stdin); 
-				} 
+					f2=freopen(filename_src,"r",stdin);  
+				} */
 				if (flag_left==1)
 				{
-					freopen(filename_dest, "w+", stdout);
+				 	f=freopen(filename_dest, "w+", stdout);
 				}
 			
 
 				execve(path, argv, 0); 
-			
+				fclose(f);
+				fclose(f2);
 				fprintf(stderr, "Child process could not do xecve\n");
 			}
 		       	else
-			wait(NULL);
+				wait(NULL);
 		}
 	
 		/* reseting the flags */
